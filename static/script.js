@@ -187,9 +187,6 @@ async function searchImages(query = '') {
  */
 async function loadImages() {
     await searchImages('');
-    document.getElementById("clearAllBtn").style.display =
-        images.length === 0 ? "none" : "inline-block";
-
 }
 
 /**

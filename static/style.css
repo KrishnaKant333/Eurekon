@@ -759,32 +759,27 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
+}
   
-  .results-actions {
+.results-actions {
     display: flex;
     align-items: center;
     gap: 12px;
-  }
+}
   
   /* Icon-only button */
-  .icon-btn {
+.icon-btn {
     background: transparent;
     border: none;
     font-size: 1.2rem;
     cursor: pointer;
     color: #9ca3af; /* gray */
     transition: color 0.2s ease, transform 0.1s ease;
-  }
+}
   
-  .icon-btn:hover {
-    color: #ef4444; /* red on hover */
+.icon-btn:hover {
     transform: scale(1.1);
-  }
-  
-  .icon-btn.danger {
-    color: #9ca3af;
-  }  
+}
 
 #scrollTopBtn {
     position: fixed;
