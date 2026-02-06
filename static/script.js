@@ -363,3 +363,32 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     loadImages();
 });
+
+document.getElementById('clearAllBtn').addEventListener('click', async () => {
+    if (!confirm('Delete all uploaded images?')) return;
+
+    const res = await fetch('/api/clear', { method: 'POST' });
+    const data = await res.json();
+
+    if (data.success) {
+        loadImages(); // reload gallery
+        showToast('All images deleted');
+    }
+});
+
+const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+        scrollTopBtn.style.display = 'block';
+    } else {
+        scrollTopBtn.style.display = 'none';
+    }
+});
+
+scrollTopBtn.addEventListener('click', () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});

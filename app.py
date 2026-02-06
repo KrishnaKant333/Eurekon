@@ -309,6 +309,23 @@ def delete_image(image_id):
     return '', 204
 
 
+@app.route('/api/clear', methods=['POST'])
+def clear_all_images():
+    """Clear all images and metadata."""
+    # Clear metadata
+    save_metadata({'images': []})
+
+    # Delete uploaded files
+    upload_dir = app.config['UPLOAD_FOLDER']
+    for filename in os.listdir(upload_dir):
+        file_path = os.path.join(upload_dir, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+    return jsonify({'success': True})
+
+
+
 if __name__ == '__main__':
     # Initialize empty metadata file if it doesn't exist
     if not os.path.exists(METADATA_FILE):
