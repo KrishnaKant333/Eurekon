@@ -11,7 +11,7 @@ const uploadSection = document.querySelector('.upload-section');
 const resultsSection = document.querySelector('.results-section');
 const uploadProgress = document.getElementById('uploadProgress');
 const progressFill = document.getElementById('progressFill');
-const progressText = document.getElementById('progressText');	
+const progressText = document.getElementById('progressText');
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const resultsGrid = document.getElementById('resultsGrid');
@@ -171,7 +171,7 @@ async function searchImages(query = '') {
         resultsCount.textContent = `${currentImages.length} image(s)`;
         renderImages(currentImages, !!query);
 
-		// Auto-scroll to results if searching
+        // Auto-scroll to results if searching
         if (query && currentImages.length > 0) {
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -187,6 +187,9 @@ async function searchImages(query = '') {
  */
 async function loadImages() {
     await searchImages('');
+    document.getElementById("clearAllBtn").style.display =
+        images.length === 0 ? "none" : "inline-block";
+
 }
 
 /**
@@ -227,8 +230,8 @@ function renderImages(images, showRelevance = false) {
                 <div class="image-card-tags">
                     ${img.image_type ? `<span class="image-tag type">${escapeHtml(img.image_type)}</span>` : ''}
                     ${(img.colors || []).slice(0, 2).map(color =>
-                        `<span class="image-tag color">${escapeHtml(color)}</span>`
-                    ).join('')}
+        `<span class="image-tag color">${escapeHtml(color)}</span>`
+    ).join('')}
                 </div>
             </div>
         </div>
@@ -254,8 +257,8 @@ function openImage(imageId) {
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             ${image.image_type ? `<span class="image-tag type">${escapeHtml(image.image_type)}</span>` : ''}
             ${(image.colors || []).map(color =>
-                `<span class="image-tag color">${escapeHtml(color)}</span>`
-            ).join('')}
+        `<span class="image-tag color">${escapeHtml(color)}</span>`
+    ).join('')}
         </div>
     `;
 

@@ -92,8 +92,19 @@
 			<section class="results-section" data-testid="section-results">
 				<div class="results-header">
 					<h2 id="resultsTitle">Your Images</h2>
-					<span id="resultsCount" class="results-count">0 images</span>
-				</div>
+				  
+					<div class="results-actions">
+					  <span id="resultsCount" class="results-count">0 image(s)</span>
+				  
+					  <button
+						id="clearAllBtn"
+						class="icon-btn danger"
+						title="Delete all images"
+					  >
+						🗑️
+					  </button>
+					</div>
+				  </div>
 				<div class="results-grid" id="resultsGrid" data-testid="grid-results">
 					<!-- Images will be populated here -->
 					<div class="empty-state" id="emptyState">
@@ -104,9 +115,7 @@
 				</div>
 			</section>
 		</main>
-		<button id="clearAllBtn" class="danger-btn">
-			Clear All Images
-		</button>
+		
 
 		<button id="scrollTopBtn" title="Go to top">↑</button>
 		<!-- Footer -->
