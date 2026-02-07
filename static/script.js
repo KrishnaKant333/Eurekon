@@ -268,7 +268,7 @@ function renderImages(images, showRelevance = false) {
                 : ''
                 }
 
-                ${(img.colors || []).slice(0, 1).map(color =>
+                ${(img.colors || []).slice(0, 2).map(color =>
                 `<span class="image-tag color">${escapeHtml(color)}</span>`
                 ).join('')}
 
@@ -300,7 +300,7 @@ function openImage(imageId) {
         ).join('')}
         ${image.image_type ? `<span class="image-tag type">${escapeHtml(image.image_type)}</span>` : ''}
 
-        ${(image.colors || []).slice(0,1).map(c =>
+        ${(image.colors || []).slice(0,2).map(c =>
             `<span class="image-tag color">${escapeHtml(c)}</span>`
         ).join('')}
       
