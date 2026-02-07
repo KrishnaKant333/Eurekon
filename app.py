@@ -203,6 +203,7 @@ def search_images():
                     'original_filename': img['original_filename'],
                     'image_type': img.get('image_type', 'other'),
                     'colors': img.get('colors', []),
+                    'keywords': img.get('keywords', []),
                     'relevance': 0
                 }
                 for img in images
@@ -248,6 +249,7 @@ def search_images():
                 'original_filename': img['original_filename'],
                 'image_type': img.get('image_type', 'other'),
                 'colors': img.get('colors', []),
+                'keywords': img.get('keywords', []),
                 'relevance': score
             })
 
@@ -275,6 +277,7 @@ def get_all_images():
                 'original_filename': img['original_filename'],
                 'image_type': img.get('image_type', 'other'),
                 'colors': img.get('colors', []),
+                'keywords': img.get('keywords', []),
                 'uploaded_at': img.get('uploaded_at', '')
             }
             for img in images

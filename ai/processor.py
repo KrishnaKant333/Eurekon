@@ -401,19 +401,13 @@ def process_image(filepath: str, filename: str = None) -> Dict[str, Any]:
     img_metadata = {}
 
     try:
-        # --- OCR (per-step try/except so pipeline continues on failure) ---
-        try:
-            ocr_text = extract_text(filepath)
-        except Exception as e:
-            print(f"OCR failed for {filepath}: {e}")
-
         # --- Colors ---
         try:
             colors_list = color.extract_colors(filepath, max_colors=3)
         except Exception as e:
             print(f"Color extraction failed for {filepath}: {e}")
 
-        # --- Vision / image type ---
+        # --- Vision / image type (run before OCR to decide if OCR is needed) ---
         tags = []
         try:
             tags = vision.classify_image(filepath)
@@ -421,12 +415,26 @@ def process_image(filepath: str, filename: str = None) -> Dict[str, Any]:
             print(f"Vision classification failed for {filepath}: {e}")
         image_type = tags[0] if tags else "photo"
 
-        # --- Object detection ---
+        # --- Object detection (with empty OCR first, for is_text_heavy heuristic) ---
         objects_list = []
         try:
-            objects_list = objects.detect_objects(filepath, ocr_text)
+            objects_list = objects.detect_objects(filepath, "")
         except Exception as e:
             print(f"Object detection failed for {filepath}: {e}")
+
+        # --- OCR: only run for text-heavy images (saves time on normal photos) ---
+        # is_text_heavy uses image_type + tags + objects to decide if OCR is worthwhile.
+        # Skipping OCR for photos/selfies improves processing speed significantly.
+        pre_keywords = list(set((tags[1:] if len(tags) > 1 else []) + objects_list))
+        if vision.is_text_heavy(image_type, pre_keywords):
+            try:
+                ocr_text = extract_text(filepath)
+                # Re-run object detection with OCR text for better "text-heavy" hint
+                objects_list = objects.detect_objects(filepath, ocr_text)
+            except Exception as e:
+                print(f"OCR failed for {filepath}: {e}")
+        else:
+            ocr_text = ""
 
         # --- Image metadata ---
         try:

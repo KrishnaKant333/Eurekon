@@ -260,10 +260,18 @@ function renderImages(images, showRelevance = false) {
             <div class="image-card-info">
                 <div class="image-card-name">${escapeHtml(img.original_filename)}</div>
                 <div class="image-card-tags">
-                    ${img.image_type ? `<span class="image-tag type">${escapeHtml(img.image_type)}</span>` : ''}
-                    ${(img.colors || []).slice(0, 2).map(color =>
-        `<span class="image-tag color">${escapeHtml(color)}</span>`
-    ).join('')}
+                ${(img.keywords || []).slice(0, 2).map(keyword =>
+                    `<span class="image-tag keyword">${escapeHtml(keyword)}</span>`
+                ).join('')}
+                ${img.image_type
+                ? `<span class="image-tag type">${escapeHtml(img.image_type)}</span>`
+                : ''
+                }
+
+                ${(img.colors || []).slice(0, 1).map(color =>
+                `<span class="image-tag color">${escapeHtml(color)}</span>`
+                ).join('')}
+
                 </div>
             </div>
         </div>
@@ -287,10 +295,15 @@ function openImage(imageId) {
             <strong>${escapeHtml(image.original_filename)}</strong>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            ${image.image_type ? `<span class="image-tag type">${escapeHtml(image.image_type)}</span>` : ''}
-            ${(image.colors || []).map(color =>
-        `<span class="image-tag color">${escapeHtml(color)}</span>`
-    ).join('')}
+        ${(image.keywords || []).slice(0,2).map(k =>
+            `<span class="image-tag keyword">${escapeHtml(k)}</span>`
+        ).join('')}
+        ${image.image_type ? `<span class="image-tag type">${escapeHtml(image.image_type)}</span>` : ''}
+
+        ${(image.colors || []).slice(0,1).map(c =>
+            `<span class="image-tag color">${escapeHtml(c)}</span>`
+        ).join('')}
+      
         </div>
     `;
 
