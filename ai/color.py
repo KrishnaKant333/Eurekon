@@ -12,7 +12,7 @@ from collections import Counter
 # Base color palette - only these colors are returned
 BASE_COLORS = [
     "red", "blue", "green", "yellow", 
-    "black", "white", "gray", "brown", "purple"
+    "black", "white", "gray", "brown", "purple", "pink"  # Added pink as distinct color
 ]
 
 
@@ -22,7 +22,13 @@ COLOR_DEFINITIONS = {
         "ranges": [
             ((200, 0, 0), (255, 100, 100)),    # Pure red
             ((150, 0, 0), (255, 50, 50)),      # Dark red/maroon
-            ((255, 100, 150), (255, 200, 220)), # Pink
+        ]
+    },
+    "pink": {  # Pink as its own base color, not mapped to red
+        "ranges": [
+            ((255, 150, 180), (255, 220, 240)), # Light pink
+            ((255, 100, 150), (255, 200, 220)), # Medium pink
+            ((200, 100, 130), (255, 180, 200)), # Dusty pink
         ]
     },
     "blue": {
@@ -34,9 +40,10 @@ COLOR_DEFINITIONS = {
     },
     "green": {
         "ranges": [
-            ((0, 150, 0), (100, 255, 100)),    # Pure green
-            ((0, 100, 0), (80, 180, 80)),      # Dark green
-            ((100, 200, 100), (200, 255, 200)), # Light green
+            ((0, 150, 0), (100, 255, 100)),
+            ((0, 100, 0), (80, 180, 80)),
+            ((100, 200, 100), (200, 255, 200)),
+            ((70, 110, 40), (140, 200, 120)),  # NEW
         ]
     },
     "yellow": {
@@ -67,9 +74,9 @@ COLOR_DEFINITIONS = {
             ((200, 200, 200), (255, 255, 255)), # White/very light
         ]
     },
-    "gray": {
+    "gray": {  # Narrowed range - only true neutral grays
         "ranges": [
-            ((50, 50, 50), (200, 200, 200)),   # Gray range
+            ((60, 60, 60), (190, 190, 190)),   # Gray range (tightened to avoid pastels)
         ]
     },
 }
@@ -80,7 +87,8 @@ def extract_colors(image_path: str, max_colors: int = 3) -> List[str]:
     Extract dominant base colors from an image.
     
     Returns only base colors from the simplified palette.
-    Maps similar shades (pink→red, cyan→blue, etc.) automatically.
+    Maps similar shades (cyan→blue, etc.) automatically.
+    Pink is now a distinct color, not mapped to red.
     
     Args:
         image_path: Path to the image file
@@ -126,7 +134,7 @@ def _map_pixels_to_base_colors(pixels: np.ndarray) -> Counter:
     
     Uses RGB distance calculation to determine which base color
     each pixel belongs to. This automatically handles shade mapping
-    (pink→red, maroon→red, cyan→blue, etc.)
+    (maroon→red, cyan→blue, etc.) Pink is now distinct from red.
     
     Returns:
         Counter object with base color frequencies
@@ -161,11 +169,14 @@ def _classify_pixel_color(r: int, g: int, b: int) -> str:
     2. If not, use RGB-based heuristics
     3. Fallback to grayscale detection
     
+    Pink is now detected as its own color before red detection.
+    Gray detection is stricter to avoid misclassifying pastels and light colors.
+    
     This handles shade mapping automatically:
-    - Pink (255, 192, 203) → red (high R, moderate G/B)
     - Maroon (128, 0, 0) → red (dominant R)
     - Cyan (0, 255, 255) → blue (high G+B, low R)
     - Teal (0, 128, 128) → blue (moderate G+B, low R)
+    - Pink (255, 192, 203) → pink (high R with moderate G/B)
     """
     
     # First, check defined ranges for exact matches
@@ -178,11 +189,14 @@ def _classify_pixel_color(r: int, g: int, b: int) -> str:
     
     # If no exact match, use heuristic rules
     
-    # Grayscale detection (R≈G≈B)
-    if max(r, g, b) - min(r, g, b) < 30:
-        if max(r, g, b) < 60:
+    # Stricter grayscale detection - only true neutral grays (R≈G≈B within tight tolerance)
+    # This prevents pastels, skin tones, and light colors from being misclassified as gray
+    color_variance = max(r, g, b) - min(r, g, b)
+    if color_variance < 15:  # Very tight tolerance - only truly neutral colors
+        avg_brightness = (r + g + b) // 3
+        if avg_brightness < 60:
             return "black"
-        elif min(r, g, b) > 180:
+        elif avg_brightness > 190:
             return "white"
         else:
             return "gray"
@@ -190,12 +204,16 @@ def _classify_pixel_color(r: int, g: int, b: int) -> str:
     # Find dominant channel
     max_channel = max(r, g, b)
     
-    # RED family (includes pink, maroon, crimson)
+    # PINK detection (must come before RED to avoid being swallowed by red logic)
+    # Pink = high red + moderate-to-high green and blue (creates the pastel/light appearance)
+    if r == max_channel and r > 180:
+        if g > 100 and b > 100 and g < r - 20 and b < r - 20:
+            # High R with elevated G and B, but R is clearly dominant = pink
+            return "pink"
+    
+    # RED family (maroon, crimson, dark red - but NOT pink)
     if r == max_channel and r > 100:
-        # Pink detection: high red + moderate green/blue
-        if g > 100 and b > 100:
-            return "red"  # Pink → red
-        # Maroon/dark red: dominant red
+        # Pink already handled above, so this catches true reds
         return "red"
     
     # BLUE family (includes cyan, teal, navy)
@@ -208,12 +226,12 @@ def _classify_pixel_color(r: int, g: int, b: int) -> str:
             return "blue"  # Teal → blue
         return "blue"
     
-    # GREEN family
-    if g == max_channel and g > 100:
-        # Yellow detection: high green + high red
-        if r > 150 and b < 100:
-            return "yellow"
-        return "green"
+    # GREEN family (including foliage, olive, forest)
+    if g > 90 and g >= r + 15 and g >= b + 10:
+        # Yellow-ish green
+        if r > 160 and b < 90:
+         return "yellow"
+    return "green"
     
     # PURPLE family (red + blue, low green)
     if r > 80 and b > 80 and g < min(r, b) - 30:
@@ -237,7 +255,8 @@ def get_color_variations(base_color: str) -> List[str]:
     Get all color variations that map to a base color.
     
     This is used for search: when user searches "red",
-    we want to match images tagged with red (including pink, maroon, etc.)
+    we want to match images tagged with red (including maroon, crimson, etc.)
+    Pink is now a separate color and does not map to red.
     
     Args:
         base_color: Base color name (e.g., "red")
@@ -252,7 +271,6 @@ def get_color_variations(base_color: str) -> List[str]:
     
     # Handle legacy color names that might still exist in old data
     legacy_mapping = {
-        "pink": "red",
         "maroon": "red",
         "crimson": "red",
         "cyan": "blue",
@@ -266,6 +284,7 @@ def get_color_variations(base_color: str) -> List[str]:
         "beige": "brown",
         "violet": "purple",
         "magenta": "purple",
+        # Pink is now a base color, not legacy
     }
     
     return [legacy_mapping.get(base_color.lower(), "gray")]
