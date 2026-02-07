@@ -161,88 +161,59 @@ def _map_pixels_to_base_colors(pixels: np.ndarray) -> Counter:
 
 
 def _classify_pixel_color(r: int, g: int, b: int) -> str:
-    """
-    Classify a single pixel RGB value to a base color.
-    
-    Strategy:
-    1. Check if pixel falls within defined color ranges
-    2. If not, use RGB-based heuristics
-    3. Fallback to grayscale detection
-    
-    Pink is now detected as its own color before red detection.
-    Gray detection is stricter to avoid misclassifying pastels and light colors.
-    
-    This handles shade mapping automatically:
-    - Maroon (128, 0, 0) → red (dominant R)
-    - Cyan (0, 255, 255) → blue (high G+B, low R)
-    - Teal (0, 128, 128) → blue (moderate G+B, low R)
-    - Pink (255, 192, 203) → pink (high R with moderate G/B)
-    """
-    
-    # First, check defined ranges for exact matches
+    # Convert to Python ints (prevents overflow everywhere)
+    r, g, b = int(r), int(g), int(b)
+
+    # 1️⃣ Exact range matches FIRST (authoritative)
     for color_name, definition in COLOR_DEFINITIONS.items():
         for min_rgb, max_rgb in definition["ranges"]:
             if (_in_range(r, min_rgb[0], max_rgb[0]) and
                 _in_range(g, min_rgb[1], max_rgb[1]) and
                 _in_range(b, min_rgb[2], max_rgb[2])):
                 return color_name
-    
-    # If no exact match, use heuristic rules
-    
-    # Stricter grayscale detection - only true neutral grays (R≈G≈B within tight tolerance)
-    # This prevents pastels, skin tones, and light colors from being misclassified as gray
+
+    # 2️⃣ Strict grayscale detection (neutral only)
     color_variance = max(r, g, b) - min(r, g, b)
-    if color_variance < 15:  # Very tight tolerance - only truly neutral colors
+    if color_variance < 15:
         avg_brightness = (r + g + b) // 3
         if avg_brightness < 60:
             return "black"
-        elif avg_brightness > 190:
+        elif avg_brightness > 200:
             return "white"
         else:
             return "gray"
-    
-    # Find dominant channel
-    max_channel = max(r, g, b)
-    
-    # PINK detection (must come before RED to avoid being swallowed by red logic)
-    # Pink = high red + moderate-to-high green and blue (creates the pastel/light appearance)
-    if r == max_channel and r > 180:
-        if g > 100 and b > 100 and g < r - 20 and b < r - 20:
-            # High R with elevated G and B, but R is clearly dominant = pink
+
+    # 3️⃣ PINK (must come before red)
+    if r > 180 and r > g and r > b:
+        if g > 110 and b > 110 and (r - g) < 90 and (r - b) < 90:
             return "pink"
-    
-    # RED family (maroon, crimson, dark red - but NOT pink)
-    if r == max_channel and r > 100:
-        # Pink already handled above, so this catches true reds
+
+    # 4️⃣ RED (true red only)
+    if r > 140 and r > g + 40 and r > b + 40:
         return "red"
-    
-    # BLUE family (includes cyan, teal, navy)
-    if b == max_channel and b > 100:
-        # Cyan detection: high blue + high green, low red
-        if g > 150 and r < 100:
-            return "blue"  # Cyan → blue
-        # Teal: moderate blue + green
-        if g > 80:
-            return "blue"  # Teal → blue
-        return "blue"
-    
-    # GREEN family (including foliage, olive, forest)
-    if g > 90 and g >= r + 15 and g >= b + 10:
-        # Yellow-ish green
-        if r > 160 and b < 90:
-         return "yellow"
-    return "green"
-    
-    # PURPLE family (red + blue, low green)
-    if r > 80 and b > 80 and g < min(r, b) - 30:
+
+    # 5️⃣ PURPLE
+    if r > 90 and b > 90 and g < min(r, b) - 30:
         return "purple"
-    
-    # BROWN family (moderate red + lower green)
-    if r > 80 and g > 40 and g < r - 30 and b < g:
+
+    # 6️⃣ YELLOW
+    if r > 170 and g > 170 and b < 120:
+        return "yellow"
+
+    # 7️⃣ GREEN (expanded but controlled)
+    if g > 100 and g > r + 15 and g > b + 15:
+        return "green"
+
+    # 8️⃣ BLUE
+    if b > 100 and b > r + 15 and b > g + 15:
+        return "blue"
+
+    # 9️⃣ BROWN
+    if 80 < r < 180 and 50 < g < 130 and b < g:
         return "brown"
-    
-    # Default fallback
+
     return "gray"
+
 
 
 def _in_range(value: int, min_val: int, max_val: int) -> bool:
